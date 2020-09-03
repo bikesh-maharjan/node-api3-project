@@ -27,7 +27,13 @@ router.get("/", (req, res) => {
 
 router.get("/:id", validateUserId, (req, res) => {
   // do your magic!
-  res.status(200).json(req.user);
+  Users.getById(req.params.id)
+    .then((user) => {
+      res.status(200).json(user);
+    })
+    .catch((err) => {
+      res.status(404).json(err);
+    });
 });
 
 router.get("/:id/posts", validateUserId, (req, res) => {
@@ -41,7 +47,7 @@ router.get("/:id/posts", validateUserId, (req, res) => {
     });
 });
 
-router.delete("/:id", (req, res) => {
+router.delete("/:id", validateUserId, (req, res) => {
   // do your magic!
   const { id } = req.params;
   Users.remove(id)
@@ -56,7 +62,7 @@ router.delete("/:id", (req, res) => {
 router.put("/:id", validateUserId, (req, res) => {
   // do your magic!
   const editedUser = req.body;
-  const { id } = req.params;
+  const id = req.params;
   Users.update(id, editedUser)
     .then((es) => {
       res.status(200).json(editedUser);
@@ -70,9 +76,10 @@ router.put("/:id", validateUserId, (req, res) => {
 
 function validateUserId(req, res, next) {
   // do your magic!
-  const { id } = req.params;
+  const id = req.params.id;
+  console.log(id);
   let user = {};
-  Users.getByID(id).then((userData) => {
+  Users.getById(id).then((userData) => {
     user = userData;
     if (user) {
       req.user = user;
@@ -81,6 +88,33 @@ function validateUserId(req, res, next) {
       res.status(400).json({ message: "User id is invalid" });
     }
   });
+}
+
+function validateUser(req, res, next) {
+  const { id } = req.params.id;
+  // do your magic!
+  if (req.body === {}) {
+    res.status(400).json({ message: "the user data is missing " });
+  } else if (!req.body.name) {
+    res.status(400).json({ message: "The name field is missiing" });
+  } else {
+    Users.insert(req.body);
+    next();
+  }
+}
+
+function validatePost(req, res, next) {
+  const { id } = req.params;
+  // do your magic!
+  if (req.body === {}) {
+    res.status.json({ message: " The post data is  missing" });
+  } else if (!req.body.text) {
+    res.status(400).json({ message: "The required text field is missing " });
+  } else {
+    req.body.user_id = id;
+    Posts.insert(req.body);
+    next();
+  }
 }
 
 module.exports = router;
